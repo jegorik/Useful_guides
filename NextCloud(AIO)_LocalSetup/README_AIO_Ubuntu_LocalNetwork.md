@@ -1119,6 +1119,50 @@ sudo docker restart nextcloud-aio-database
 sudo docker logs nextcloud-aio-database
 ```
 
+### Docker API Version Mismatch Error
+
+**Error message:**
+
+```text
+client version 1.41 is too old. Minimum supported API version is 1.44
+```
+
+**Cause:** The `latest` tag of Nextcloud AIO mastercontainer may not support newer Docker versions (e.g., Docker 29.x with API 1.52).
+
+**Solution:** Use the `beta` tag instead of `latest`:
+
+```bash
+# Remove old mastercontainer
+sudo docker stop nextcloud-aio-mastercontainer
+sudo docker rm nextcloud-aio-mastercontainer
+
+# Remove old image
+sudo docker rmi ghcr.io/nextcloud-releases/all-in-one:latest
+
+# Pull and run beta version
+sudo docker run \
+  --init \
+  --sig-proxy=false \
+  --name nextcloud-aio-mastercontainer \
+  --restart always \
+  --publish 8080:8080 \
+  --env APACHE_PORT=11000 \
+  --env APACHE_IP_BINDING=0.0.0.0 \
+  --env SKIP_DOMAIN_VALIDATION=true \
+  --volume nextcloud_aio_mastercontainer:/mnt/docker-aio-config \
+  --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+  ghcr.io/nextcloud-releases/all-in-one:beta
+```
+
+**Check your Docker version:**
+
+```bash
+docker --version
+sudo docker version | grep -E "Version|API"
+```
+
+If Docker API version is 1.44 or higher and you're getting this error, use the `beta` tag.
+
 ---
 
 ## Maintenance
